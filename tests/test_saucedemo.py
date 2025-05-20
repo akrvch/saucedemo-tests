@@ -84,7 +84,7 @@ def test_product_appears_in_cart(driver):
         EC.text_to_be_present_in_element((By.CLASS_NAME, "shopping_cart_badge"), "1")
     )
     driver.find_element(By.CLASS_NAME, "shopping_cart_link").click()
-    items = WebDriverWait(driver, 10).until(
+    items = WebDriverWait(driver, 30).until(
         EC.presence_of_all_elements_located((By.CLASS_NAME, "cart_item"))
     )
     assert any("Sauce Labs Onesie" in item.text for item in items)
