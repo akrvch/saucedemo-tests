@@ -1,5 +1,8 @@
+import tempfile
+
 import pytest
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
@@ -7,8 +10,15 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 @pytest.fixture
 def driver():
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    profile_dir = tempfile.mkdtemp(prefix="chrome-profile-")
+    options.add_argument(f"--user-data-dir={profile_dir}")
+
     service = Service(ChromeDriverManager().install())
-    drv = webdriver.Chrome(service=service)
+    drv = webdriver.Chrome(service=service, options=options)
     drv.implicitly_wait(5)
     yield drv
     drv.quit()
@@ -51,4 +61,4 @@ def test_product_appears_in_cart(driver):
     driver.find_element(By.ID, "add-to-cart-sauce-labs-onesie").click()
     driver.find_element(By.CLASS_NAME, "shopping_cart_link").click()
     items = driver.find_elements(By.CLASS_NAME, "cart_item")
-    assert any("Sauce Labs Onesie" in item.text for item in items)
+    assert any("Sauce Labs Onesie" in item.text for item in items), f"Actual items: {[item.text for item in items]}"
