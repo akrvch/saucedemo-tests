@@ -2,7 +2,6 @@ import tempfile
 
 import pytest
 from selenium import webdriver
-from selenium.common import TimeoutException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -16,6 +15,7 @@ def driver():
     options = Options()
     options.add_argument("--headless=new")
     options.add_argument("--disable-gpu")
+    options.add_argument("--guest")
     options.add_argument("--window-size=1920,1080")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
@@ -80,19 +80,15 @@ def test_add_to_cart_button_changes(driver):
 
 def test_product_appears_in_cart(driver):
     login(driver, "standard_user", "secret_sauce")
-    try:
-        add_btn = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.ID, "add-to-cart-sauce-labs-onesie"))
-        )
-        add_btn.click()
-        WebDriverWait(driver, 10).until(
-            EC.text_to_be_present_in_element((By.CLASS_NAME, "shopping_cart_badge"), "1")
-        )
-        driver.find_element(By.CLASS_NAME, "shopping_cart_link").click()
-        items = WebDriverWait(driver, 10).until(
-            EC.presence_of_all_elements_located((By.CLASS_NAME, "cart_item"))
-        )
-        assert any("Sauce Labs Onesie" in item.text for item in items)
-    except TimeoutException:
-        print("Timeout occurred. Page source:", driver.page_source)
-        raise
+    add_btn = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.ID, "add-to-cart-sauce-labs-onesie"))
+    )
+    add_btn.click()
+    WebDriverWait(driver, 10).until(
+        EC.text_to_be_present_in_element((By.CLASS_NAME, "shopping_cart_badge"), "1")
+    )
+    driver.find_element(By.CLASS_NAME, "shopping_cart_link").click()
+    items = WebDriverWait(driver, 5).until(
+        EC.presence_of_all_elements_located((By.CLASS_NAME, "cart_item"))
+    )
+    assert any("Sauce Labs Onesie" in item.text for item in items)
