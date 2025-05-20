@@ -1,12 +1,14 @@
-import pytest
 import tempfile
+
+import pytest
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
+
 
 @pytest.fixture
 def driver():
@@ -78,7 +80,7 @@ def test_product_appears_in_cart(driver):
         EC.element_to_be_clickable((By.ID, "add-to-cart-sauce-labs-onesie"))
     )
     add_btn.click()
-    badge = WebDriverWait(driver, 5).until(
+    WebDriverWait(driver, 5).until(
         EC.text_to_be_present_in_element((By.CLASS_NAME, "shopping_cart_badge"), "1")
     )
     driver.find_element(By.CLASS_NAME, "shopping_cart_link").click()
