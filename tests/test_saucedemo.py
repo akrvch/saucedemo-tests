@@ -2,6 +2,7 @@ import tempfile
 
 import pytest
 from selenium import webdriver
+from selenium.common import TimeoutException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -18,10 +19,13 @@ def driver():
     options.add_argument("--window-size=1920,1080")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_experimental_option("excludeSwitches", ["enable-automation", "disable-save-password-bubble"])
+    options.add_experimental_option("useAutomationExtension", False)
+    options.add_argument("--disable-infobars")
+    options.add_argument("--disable-blink-features=PasswordLeakDetection,SavePasswordBubble")
+    options.add_argument("--disable-features=TranslateUI,AutofillServerCommunication,PasswordManager")
     profile_dir = tempfile.mkdtemp(prefix="chrome-profile-")
     options.add_argument(f"--user-data-dir={profile_dir}")
-    prefs = {"credentials_enable_service": False, "profile.password_manager_enabled": False}
-    options.add_experimental_option("prefs", prefs)
 
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
@@ -50,7 +54,7 @@ def test_successful_login(driver):
 
 def test_unsuccessful_login(driver):
     login(driver, "standard_user", "wrong_password")
-    err = WebDriverWait(driver, 5).until(
+    err = WebDriverWait(driver, 10).until(
         EC.visibility_of_element_located((By.CSS_SELECTOR, "h3[data-test='error']"))
     ).text
     assert "Username and password do not match any user in this service" in err
@@ -63,12 +67,12 @@ def test_redirect_after_login(driver):
 
 def test_add_to_cart_button_changes(driver):
     login(driver, "standard_user", "secret_sauce")
-    add_btn = WebDriverWait(driver, 5).until(
+    btn = WebDriverWait(driver, 10).until(
         EC.element_to_be_clickable((By.ID, "add-to-cart-sauce-labs-onesie"))
     )
-    assert add_btn.text.lower() == "add to cart"
-    add_btn.click()
-    remove_btn = WebDriverWait(driver, 5).until(
+    assert btn.text.lower() == "add to cart"
+    btn.click()
+    remove_btn = WebDriverWait(driver, 10).until(
         EC.element_to_be_clickable((By.ID, "remove-sauce-labs-onesie"))
     )
     assert remove_btn.text.lower() == "remove"
@@ -76,15 +80,19 @@ def test_add_to_cart_button_changes(driver):
 
 def test_product_appears_in_cart(driver):
     login(driver, "standard_user", "secret_sauce")
-    add_btn = WebDriverWait(driver, 5).until(
-        EC.element_to_be_clickable((By.ID, "add-to-cart-sauce-labs-onesie"))
-    )
-    add_btn.click()
-    WebDriverWait(driver, 5).until(
-        EC.text_to_be_present_in_element((By.CLASS_NAME, "shopping_cart_badge"), "1")
-    )
-    driver.find_element(By.CLASS_NAME, "shopping_cart_link").click()
-    items = WebDriverWait(driver, 30).until(
-        EC.presence_of_all_elements_located((By.CLASS_NAME, "cart_item"))
-    )
-    assert any("Sauce Labs Onesie" in item.text for item in items)
+    try:
+        add_btn = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.ID, "add-to-cart-sauce-labs-onesie"))
+        )
+        add_btn.click()
+        WebDriverWait(driver, 10).until(
+            EC.text_to_be_present_in_element((By.CLASS_NAME, "shopping_cart_badge"), "1")
+        )
+        driver.find_element(By.CLASS_NAME, "shopping_cart_link").click()
+        items = WebDriverWait(driver, 10).until(
+            EC.presence_of_all_elements_located((By.CLASS_NAME, "cart_item"))
+        )
+        assert any("Sauce Labs Onesie" in item.text for item in items)
+    except TimeoutException:
+        print("Timeout occurred. Page source:", driver.page_source)
+        raise

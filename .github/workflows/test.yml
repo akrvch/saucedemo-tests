@@ -41,7 +41,7 @@ jobs:
       run: uv run ruff check .
 
     - name: Run tests
-      run: uv run pytest tests/ --junitxml=reports/junit.xml
+      run: uv run pytest tests/ --verbose --junitxml=reports/junit.xml
 
     - name: Upload test results
       if: always()
