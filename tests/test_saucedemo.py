@@ -19,11 +19,17 @@ def driver():
     options.add_argument("--window-size=1920,1080")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    options.add_experimental_option("excludeSwitches", ["enable-automation", "disable-save-password-bubble"])
+    options.add_experimental_option(
+        "excludeSwitches", ["enable-automation", "disable-save-password-bubble"]
+    )
     options.add_experimental_option("useAutomationExtension", False)
     options.add_argument("--disable-infobars")
-    options.add_argument("--disable-blink-features=PasswordLeakDetection,SavePasswordBubble")
-    options.add_argument("--disable-features=TranslateUI,AutofillServerCommunication,PasswordManager")
+    options.add_argument(
+        "--disable-blink-features=PasswordLeakDetection,SavePasswordBubble"
+    )
+    options.add_argument(
+        "--disable-features=TranslateUI,AutofillServerCommunication,PasswordManager"
+    )
     profile_dir = tempfile.mkdtemp(prefix="chrome-profile-")
     options.add_argument(f"--user-data-dir={profile_dir}")
 
@@ -42,7 +48,9 @@ def login(driver, username: str, password: str):
     WebDriverWait(driver, 10).until(
         EC.any_of(
             EC.url_contains("inventory.html"),
-            EC.visibility_of_element_located((By.CSS_SELECTOR, "h3[data-test='error']"))
+            EC.visibility_of_element_located(
+                (By.CSS_SELECTOR, "h3[data-test='error']")
+            ),
         )
     )
 
@@ -54,9 +62,15 @@ def test_successful_login(driver):
 
 def test_unsuccessful_login(driver):
     login(driver, "standard_user", "wrong_password")
-    err = WebDriverWait(driver, 10).until(
-        EC.visibility_of_element_located((By.CSS_SELECTOR, "h3[data-test='error']"))
-    ).text
+    err = (
+        WebDriverWait(driver, 10)
+        .until(
+            EC.visibility_of_element_located(
+                (By.CSS_SELECTOR, "h3[data-test='error']")
+            )
+        )
+        .text
+    )
     assert "Username and password do not match any user in this service" in err
 
 
@@ -85,7 +99,9 @@ def test_product_appears_in_cart(driver):
     )
     add_btn.click()
     WebDriverWait(driver, 10).until(
-        EC.text_to_be_present_in_element((By.CLASS_NAME, "shopping_cart_badge"), "1")
+        EC.text_to_be_present_in_element(
+            (By.CLASS_NAME, "shopping_cart_badge"), "1"
+        )
     )
     driver.find_element(By.CLASS_NAME, "shopping_cart_link").click()
     items = WebDriverWait(driver, 5).until(
